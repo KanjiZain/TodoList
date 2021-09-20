@@ -1,14 +1,30 @@
-import React, {useState} from 'react';
-import { Text, View, StyleSheet, KeyboardAvoidingView,Keyboard, TextInput, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Text, View, StyleSheet, FlatList, Keyboard, TextInput, TouchableOpacity } from 'react-native';
 import Task from './Components/Task'
 
 const App = () => {
-  const [task,setTask] = useState();
-  const [taskItems , setTaskItems] = useState([]);
+  const [keyboardStatus, setKeyboardStatus] = useState(false);
+  const [task, setTask] = useState();
+  const [taskItems, setTaskItems] = useState(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m"]);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
+      setKeyboardStatus(true);
+    });
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardStatus(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const handleAddTask = () => {
-    Keyboard.dismiss();
+    console.log(taskItems)
     setTaskItems([...taskItems, task]);
+    setIsKeyboardOpened(false)
     setTask(null);
   }
 
@@ -17,35 +33,33 @@ const App = () => {
     itemscopy.splice(index, 1);
     setTaskItems(itemscopy);
   }
-
+  const renderItem = ({ item, index }) => {
+    return (<TouchableOpacity key={index} onPress={() => delteTask(index)}>
+      <Task text={item} />
+    </TouchableOpacity>
+    )
+  };
   return (
-
-   
-
-    <View style={styles.container}>
-
+    <>
       <View style={styles.taskWrapper}>
         <Text style={styles.sectionTitle}>Today's Task</Text>
-        <View style={styles.items}>
-          {
-            taskItems.map((item, index) => {
-              return <TouchableOpacity key={index} onPress={() =>delteTask(index)}>
-                <Task text={item}/>
-              </TouchableOpacity>
-            })
-          }
-        </View>
       </View>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.writeTaskWrapper}>
-        <TextInput style={styles.Input} placeholder={'Write Your Task Here'}  value={task} onChangeText={text => setTask(text)} />
-      <TouchableOpacity onPress={() => handleAddTask()}>
-        <View style={styles.addWrapper}>
-          <Text style={styles.addText}>+</Text>
-        </View>
-      </TouchableOpacity>
-      </KeyboardAvoidingView>
-    </View>
-
+      <View style={{ maxHeight: keyboardStatus ? '68%' : '80%' }}>
+        <FlatList
+          data={taskItems}
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+        />
+      </View>
+      <View style={{ flexDirection: 'row', width: '45%', position: 'absolute', bottom: 5, left: 50 }}>
+        <TextInput style={styles.Input} placeholder={'Write Your Task Here'} value={task} onChangeText={text => setTask(text)} />
+        <TouchableOpacity onPress={() => handleAddTask()}>
+          <View style={styles.addWrapper}>
+            <Text style={styles.addText}>+</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    </>
   )
 }
 
@@ -63,16 +77,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   items: {
-    marginTop: 20,
+    maxHeight: '68%'
+    // marginTop: 20,
   },
   writeTaskWrapper: {
-    position: 'absolute',
-    bottom: 60,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    flex: 1
+    alignSelf: 'center'
+    // position: 'absolute',
+    // bottom: 5 ,
+    // width: '100%',
+    // flexDirection: 'row',
+    // justifyContent:'center'
+    // justifyContent: 'space-around',
+    // alignItems: 'center',
+    // flex: 1
   },
   Input: {
     paddingVertical: 15,
@@ -83,9 +100,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     width: 250,
   },
-  addWrapper:{
-    width:60,
-    height:60,
+  addWrapper: {
+    width: 60,
+    height: 60,
     backgroundColor: '#FFFF',
     borderRadius: 60,
     justifyContent: 'center',
